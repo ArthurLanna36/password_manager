@@ -30,6 +30,8 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
     if (_useSpecialChars) chars.write(specialChars);
 
     final allChars = chars.toString();
+    if (allChars.isEmpty) return;
+
     final password = List.generate(_passwordLength.toInt(), (index) {
       final randomIndex = random.nextInt(allChars.length);
       return allChars[randomIndex];
@@ -44,99 +46,108 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Password Generator"),
+        title: const Text("Password Generator"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Password Length: ${_passwordLength.toInt()}', style: TextStyle(fontSize: 16)),
-            Slider(
-              value: _passwordLength,
-              min: 4,
-              max: 32,
-              divisions: 28,
-              label: _passwordLength.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _passwordLength = value;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text('Include Uppercase Letters'),
-              value: _useUppercase,
-              onChanged: (bool? value) {
-                setState(() {
-                  _useUppercase = value!;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text('Include Numbers'),
-              value: _useNumbers,
-              onChanged: (bool? value) {
-                setState(() {
-                  _useNumbers = value!;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text('Include Special Characters'),
-              value: _useSpecialChars,
-              onChanged: (bool? value) {
-                setState(() {
-                  _useSpecialChars = value!;
-                });
-              },
-            ),
-            SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _generatePassword,
-                child: Text('Generate Password'),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Password Length: ${_passwordLength.toInt()}',
+                  style: const TextStyle(fontSize: 16)),
+              Slider(
+                value: _passwordLength,
+                min: 4,
+                max: 32,
+                divisions: 28,
+                label: _passwordLength.round().toString(),
+                onChanged: (double value) {
+                  setState(() {
+                    _passwordLength = value;
+                  });
+                },
               ),
-            ),
-            SizedBox(height: 20),
-            if (_generatedPassword.isNotEmpty)
-              Column(
-                children: [
-                  Text(
-                    'Generated Password:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8.0),
+              CheckboxListTile(
+                title: const Text('Include Uppercase Letters'),
+                value: _useUppercase,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _useUppercase = value!;
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('Include Numbers'),
+                value: _useNumbers,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _useNumbers = value!;
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('Include Special Characters'),
+                value: _useSpecialChars,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _useSpecialChars = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _generatePassword,
+                  child: const Text('Generate Password'),
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (_generatedPassword.isNotEmpty)
+                Column(
+                  children: [
+                    const Text(
+                      'Generated Password:',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _generatedPassword,
-                            style: TextStyle(fontSize: 18, fontFamily: 'monospace'),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _generatedPassword,
+                              style: const TextStyle(
+                                  fontSize: 18, fontFamily: 'monospace'),
+                              softWrap: true,
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.copy),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: _generatedPassword));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Password copied to clipboard!')),
-                            );
-                          },
-                        ),
-                      ],
+                          IconButton(
+                            icon: const Icon(Icons.copy),
+                            onPressed: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: _generatedPassword));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Password copied to clipboard!')),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              )
-          ],
+                  ],
+                )
+            ],
+          ),
         ),
       ),
     );
