@@ -47,3 +47,7 @@ app.*.map.json
 # Firebase
 /android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
+
+**/GeneratedPluginRegistrant.swift
+**/generated_plugin_registrant.cc
+**/generated_plugins.cmake
