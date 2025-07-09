@@ -10,7 +10,7 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Página Principal"),
+        title: Text("Home Page"),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -21,7 +21,7 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: Text('Bem-vindo, ${user?.email}!'),
+        child: Text('Welcome, ${user?.email}!'),
       ),
     );
   }
