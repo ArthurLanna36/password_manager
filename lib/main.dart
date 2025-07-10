@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:password_manager/vault/vault_screen.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -48,6 +49,7 @@ class _MainPageState extends State<MainPage> {
   static const List<Widget> _widgetOptions = <Widget>[
     HomePage(),
     PasswordGeneratorPage(),
+    VaultScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -80,6 +82,11 @@ class _MainPageState extends State<MainPage> {
                       selectedIcon: Icon(Icons.vpn_key),
                       label: Text('Password\nGenerator'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.security_outlined),
+                      selectedIcon: Icon(Icons.security),
+                      label: Text('Vault'),
+                    ),
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
@@ -107,6 +114,10 @@ class _MainPageState extends State<MainPage> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.vpn_key),
                   label: 'Generator',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.security),
+                  label: 'Vault',
                 ),
               ],
               currentIndex: _selectedIndex,

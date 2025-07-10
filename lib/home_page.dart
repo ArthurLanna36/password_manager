@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -21,7 +22,13 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: Text('Welcome, ${user?.email}!'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Welcome, ${user?.email}!'),
+            
+          ],
+        ),
       ),
     );
   }
