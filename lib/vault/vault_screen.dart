@@ -1,3 +1,4 @@
+// lib/vault/vault_screen.dart
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:password_manager/models/service.dart';
 import 'package:flutter/services.dart';
+import 'package:password_manager/services/encryption_service.dart'; // Import the service
 
 class VaultScreen extends StatefulWidget {
   const VaultScreen({super.key});
@@ -16,6 +18,7 @@ class VaultScreen extends StatefulWidget {
 class _VaultScreenState extends State<VaultScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final EncryptionService _encryptionService = EncryptionService(); // Instantiate the service
 
   @override
   Widget build(BuildContext context) {
@@ -46,17 +49,22 @@ class _VaultScreenState extends State<VaultScreen> {
 
           return ListView(
             children: snapshot.data!.docs.map((doc) {
-              final service = Service.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+              final service =
+                  Service.fromMap(doc.id, doc.data() as Map<String, dynamic>);
               return ListTile(
                 title: Text(service.name),
                 subtitle: Text(service.username),
                 trailing: IconButton(
                   icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    // Add logic to copy password to clipboard
-                    Clipboard.setData(ClipboardData(text: service.password));
+                  onPressed: () async {
+                    // Decrypt password before copying to clipboard
+                    final decryptedPassword =
+                        await _encryptionService.decrypt(service.password);
+                    if (!context.mounted) return;
+                    Clipboard.setData(ClipboardData(text: decryptedPassword));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Password copied to clipboard!')),
+                      const SnackBar(
+                          content: Text('Password copied to clipboard!')),
                     );
                   },
                 ),
@@ -73,7 +81,8 @@ class _VaultScreenState extends State<VaultScreen> {
   }
 
   void _showAddPasswordDialog(BuildContext context) {
-    final TextEditingController serviceNameController = TextEditingController();
+    final TextEditingController serviceNameController =
+        TextEditingController();
     final TextEditingController usernameController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
 
@@ -133,8 +142,11 @@ class _VaultScreenState extends State<VaultScreen> {
     );
   }
 
-  void _addService(String name, String username, String password) {
+  void _addService(String name, String username, String password) async {
     if (name.isNotEmpty && username.isNotEmpty && password.isNotEmpty) {
+      // Encrypt the password before sending it to Firestore
+      final encryptedPassword = await _encryptionService.encrypt(password);
+
       _firestore
           .collection('users')
           .doc(_auth.currentUser!.uid)
@@ -142,7 +154,7 @@ class _VaultScreenState extends State<VaultScreen> {
           .add({
         'name': name,
         'username': username,
-        'password': password,
+        'password': encryptedPassword, // Save the encrypted password
       });
     }
   }
