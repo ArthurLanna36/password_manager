@@ -1,5 +1,7 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:password_manager/vault/vault_screen.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,24 +20,53 @@ void main() async {
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
+  final _storage = const FlutterSecureStorage(
+    webOptions: WebOptions(
+      dbName: "PasswordManager",
+      publicKey: "PasswordManager",
+    ),
+  );
+
+  // This future checks if a session exists
+  Future<bool> _hasSession() async {
+    final session = await _storage.read(key: 'user_session');
+    return session == 'true';
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
+      home: FutureBuilder<bool>(
+        future: _hasSession(),
+        builder: (context, sessionSnapshot) {
+          // Wait for the session check to complete
+          if (sessionSnapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
+
+          // If a session exists, go to the main page. Otherwise, check auth state.
+          if (sessionSnapshot.data == true) {
             return const MainPage();
           }
-          return const LoginPage();
+
+          // Default behavior: check Firebase Auth state
+          return StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, authSnapshot) {
+              if (authSnapshot.hasData) {
+                return const MainPage();
+              }
+              return const LoginPage();
+            },
+          );
         },
       ),
     );
   }
 }
 
+// ... Keep the rest of main.dart the same ...
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 

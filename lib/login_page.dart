@@ -1,5 +1,7 @@
+// lib/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Import secure storage
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,6 +15,13 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
+  final _storage = const FlutterSecureStorage(
+    webOptions: WebOptions(
+      dbName: "PasswordManager",
+      publicKey: "PasswordManager",
+    ),
+  );
+  bool _keepLoggedIn = false;
 
   Future<void> _login() async {
     try {
@@ -20,6 +29,12 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text,
         password: _passwordController.text,
       );
+
+      // If "Keep me logged in" is checked, save a value to secure storage.
+      if (_keepLoggedIn) {
+        await _storage.write(key: 'user_session', value: 'true');
+      }
+
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,6 +62,18 @@ class _LoginPageState extends State<LoginPage> {
               controller: _passwordController,
               decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
+            ),
+            // Add the Checkbox here
+            CheckboxListTile(
+              title: const Text('Keep me logged in'),
+              value: _keepLoggedIn,
+              onChanged: (bool? value) {
+                setState(() {
+                  _keepLoggedIn = value ?? false;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
