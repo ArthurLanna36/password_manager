@@ -1,9 +1,21 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:password_manager/models/service.dart';
+import 'package:flutter/services.dart';
 
-class VaultScreen extends StatelessWidget {
+class VaultScreen extends StatefulWidget {
   const VaultScreen({super.key});
+
+  @override
+  State<VaultScreen> createState() => _VaultScreenState();
+}
+
+class _VaultScreenState extends State<VaultScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -11,8 +23,47 @@ class VaultScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Vault'),
       ),
-      body: const Center(
-        child: Text('Your saved passwords will appear here.'),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _firestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .collection('services')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text('Your saved passwords will appear here.'),
+            );
+          }
+
+          return ListView(
+            children: snapshot.data!.docs.map((doc) {
+              final service = Service.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+              return ListTile(
+                title: Text(service.name),
+                subtitle: Text(service.username),
+                trailing: IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed: () {
+                    // Add logic to copy password to clipboard
+                    Clipboard.setData(ClipboardData(text: service.password));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Password copied to clipboard!')),
+                    );
+                  },
+                ),
+              );
+            }).toList(),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddPasswordDialog(context),
@@ -22,6 +73,10 @@ class VaultScreen extends StatelessWidget {
   }
 
   void _showAddPasswordDialog(BuildContext context) {
+    final TextEditingController serviceNameController = TextEditingController();
+    final TextEditingController usernameController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -33,16 +88,19 @@ class VaultScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  controller: serviceNameController,
                   decoration: const InputDecoration(
                     labelText: 'Service Name',
                   ),
                 ),
                 TextField(
+                  controller: usernameController,
                   decoration: const InputDecoration(
                     labelText: 'Login',
                   ),
                 ),
                 TextField(
+                  controller: passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Password',
@@ -59,7 +117,11 @@ class VaultScreen extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  // Add logic to save the password
+                  _addService(
+                    serviceNameController.text,
+                    usernameController.text,
+                    passwordController.text,
+                  );
                   Navigator.of(context).pop();
                 },
                 child: const Text('Save'),
@@ -69,5 +131,19 @@ class VaultScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _addService(String name, String username, String password) {
+    if (name.isNotEmpty && username.isNotEmpty && password.isNotEmpty) {
+      _firestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .collection('services')
+          .add({
+        'name': name,
+        'username': username,
+        'password': password,
+      });
+    }
   }
 }
